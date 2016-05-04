@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import numpy as np
-from chainer import serializers, Variable
-import cv2
+from chainer import serializers
+from chainer import Variable
+from skimage import io
+from skimage import transform
+
 import argparse
+import numpy as np
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -19,14 +22,17 @@ if __name__ == '__main__':
     elif args.model == 'ResNet50':
         from ResNet50 import ResNet
 
-    img = cv2.imread(args.img)
-    img = cv2.resize(img, (224, 224))
+    img = io.imread(args.img)
+    img = transform.resize(img, (224, 224))
+    if img.shape[-1] > 3:
+        img = img[:, :, :3]
+    img = img[:, :, ::-1] * 255
 
     x_data = img.transpose(2, 0, 1).astype(np.float32)[np.newaxis, :, :, :]
     x_data = Variable(x_data)
 
     model = ResNet()
-    serializers.load_hdf5(args.model+'.model', model)
+    serializers.load_hdf5(args.model + '.model', model)
 
     model.train = False
     pred = model(x_data, None).data
@@ -36,4 +42,4 @@ if __name__ == '__main__':
     f.close()
 
     for i in np.argsort(pred)[0][-1::-1][:5]:
-        print line[i]
+        print(line[i])
