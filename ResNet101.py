@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import math
 import chainer
 import chainer.functions as F
 import chainer.links as L
+import math
 
 
 class BottleNeckA(chainer.Chain):
+
     def __init__(self, in_size, ch, out_size, stride=2):
         w = math.sqrt(2)
         super(BottleNeckA, self).__init__(
@@ -17,8 +18,8 @@ class BottleNeckA(chainer.Chain):
             bn2=L.BatchNormalization(ch),
             conv3=L.Convolution2D(ch, out_size, 1, 1, 0, w, nobias=True),
             bn3=L.BatchNormalization(out_size),
-
-            conv4=L.Convolution2D(in_size, out_size, 1, stride, 0, w, nobias=True),
+            conv4=L.Convolution2D(in_size, out_size, 1,
+                                  stride, 0, w, nobias=True),
             bn4=L.BatchNormalization(out_size),
         )
 
@@ -32,6 +33,7 @@ class BottleNeckA(chainer.Chain):
 
 
 class BottleNeckB(chainer.Chain):
+
     def __init__(self, in_size, ch):
         w = math.sqrt(2)
         super(BottleNeckB, self).__init__(
@@ -52,18 +54,19 @@ class BottleNeckB(chainer.Chain):
 
 
 class Block(chainer.Chain):
+
     def __init__(self, layer, in_size, ch, out_size, stride=2):
         super(Block, self).__init__()
         links = [('a', BottleNeckA(in_size, ch, out_size, stride))]
-        for i in range(layer-1):
-            links += [('b{}'.format(i+1), BottleNeckB(out_size, ch))]
+        for i in range(layer - 1):
+            links += [('b{}'.format(i + 1), BottleNeckB(out_size, ch))]
 
         for link in links:
             self.add_link(*link)
         self.forward = links
 
     def __call__(self, x, train):
-        for name,_ in self.forward:
+        for name, _ in self.forward:
             f = getattr(self, name)
             h = f(x if name == 'a' else h, train)
 

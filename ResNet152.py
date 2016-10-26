@@ -67,7 +67,8 @@ class Block(chainer.Chain):
 
     def __call__(self, x, train):
         for name, f in self.forward:
-            x = f(x, train)
+            f = getattr(self, name)
+            h = f(x if name == 'a' else h, train)
 
         return x
 
